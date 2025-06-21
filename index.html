@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AnaliseDouble Avançada</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Resetando margens e padding (mantido) */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* Estilo do body (mantido) */
+    body {
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #2c3e50;
+      color: #ecf0f1;
+      position: relative;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    /* Vídeo de fundo (mantido) */
+    video#background-video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+      filter: brightness(0.4) blur(2px);
+    }
+
+    /* Container principal (mantido) */
+    .container {
+      text-align: center;
+      z-index: 1;
+      position: relative;
+      width: 100%;
+      max-width: 1200px;
+      margin-top: 20px;
+      margin-bottom: 20px;
+      background: rgba(44, 62, 80, 0.85);
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    /* Título (mantido) */
+    .main-title {
+        font-size: 2.5em;
+        color: #fff;
+        text-shadow: 0 0 10px rgba(0, 191, 255, 0.7), 0 0 20px rgba(0, 191, 255, 0.5);
+        margin-bottom: 30px;
+    }
+
+    /* Estilo para a grid (mantido) */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(10, minmax(45px, 1fr));
+      gap: 8px;
+      justify-content: center;
+      margin: 0 auto 25px auto;
+      position: relative;
+      max-width: 600px;
+    }
+
+    /* Estilo para os quadrados (mantido) */
+    .square {
+      width: 100%;
+      padding-top: 100%;
+      position: relative;
+      background-color: rgba(65, 180, 65, 0.6);
+      border-radius: 8px;
+      border: 2px solid #000;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      overflow: hidden;
+    }
+    .square:hover {
+      transform: scale(1.08);
+      box-shadow: 0 0 15px rgba(0, 255, 127, 0.6);
+    }
+
+    /* Estilo para o campo de texto dentro do quadrado (mantido) */
+    .square input {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      text-align: center;
+      border: none;
+      background-color: transparent;
+      color: white;
+      font-size: 1em;
+      font-weight: bold;
+      outline: none;
+      padding: 5px;
+    }
+
+    /* Estilo para o botão (mantido) */
+    .analyze-btn {
+      padding: 12px 25px;
+      font-size: 1.1em;
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s ease, box-shadow 0.3s;
+      margin-top: 15px;
+      position: relative;
+      z-index: 1;
+      opacity: 0.5;
+      pointer-events: none;
+      font-weight: 600;
+      box-shadow: 0 4px 0 #c0392b, 0 6px 15px rgba(0,0,0,0.2);
+    }
+    .analyze-btn:hover:not([style*="opacity: 0.5"]) {
+      background-color: #c0392b;
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 6px 0 #962d22, 0 8px 20px rgba(0,0,0,0.3);
+    }
+    .analyze-btn:active:not([style*="opacity: 0.5"]) {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: 0 2px 0 #962d22, 0 3px 10px rgba(0,0,0,0.15);
+    }
+
+    /* --- ESTILOS NOVOS E AJUSTADOS PARA O CARD DE RESULTADOS --- */
+    .cards-container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-top: 40px;
+      gap: 20px;
+      padding: 10px 0;
+      width: 100%;
+    }
+
+    .analysis-results-card {
+      width: 100%;
+      max-width: 700px;
+      margin: 0 auto;
+      background-color: rgba(179, 51, 51, 0.75);
+      color: #fff;
+      padding: 25px;
+      border-radius: 15px;
+      border: 1px solid rgba(255, 100, 100, 0.4);
+      box-shadow:
+        0 10px 25px rgba(0,0,0,0.4),
+        0 5px 10px rgba(0,0,0,0.25) inset,
+        0 -3px 5px rgba(255,150,150,0.1) inset;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(30px) scale(0.92) perspective(800px) rotateX(-20deg);
+      transition: opacity 0.55s cubic-bezier(0.165, 0.84, 0.44, 1),
+                  transform 0.55s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+    .analysis-results-card.show {
+      opacity: 1;
+      transform: translateY(0) scale(1) perspective(800px) rotateX(0deg);
+    }
+    .analysis-results-card h3 {
+      font-size: 1.5em;
+      margin-bottom: 25px;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+      letter-spacing: 0.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .suggestions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 18px;
+    }
+    .suggestion-item {
+        background-color: rgba(0,0,0,0.22);
+        padding: 18px 15px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 3px 7px rgba(0,0,0,0.25), inset 0 1px 2px rgba(0,0,0,0.4);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 120px;
+        justify-content: center;
+        transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    }
+    .suggestion-item:hover {
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 6px 14px rgba(0,0,0,0.3), inset 0 1px 2px rgba(0,0,0,0.4), 0 0 15px rgba(255,100,100,0.3);
+    }
+    .suggestion-item h4 {
+        font-size: 1em;
+        margin-bottom: 12px;
+        color: #f0f0f0;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        font-weight: 500;
+    }
+
+    .suggestion-item .color-prediction {
+        font-size: 1.4em;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+    .color-emoji {
+        font-size: 1.3em;
+        line-height: 1;
+    }
+
+    /* Estilo para a seção de "Confiança:" */
+    .confidence-info {
+        display: block;
+        margin-top: 8px;
+        font-size: 0.8em;
+        opacity: 0.7;
+    }
+    .confidence-label {
+        font-weight: bold;
+        font-size: 1.05em;
+        margin-right: 3px;
+    }
+    .confidence-value {
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+
+
+    /* Media Queries */
+    @media (max-width: 992px) {
+      .grid { grid-template-columns: repeat(8, minmax(45px, 1fr)); max-width: 550px; }
+      .main-title { font-size: 2.2em; }
+       .suggestions-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; }
+       .analysis-results-card h3 { font-size: 1.3em; }
+       .suggestion-item h4 {font-size: 0.9em;}
+       .suggestion-item .color-prediction { font-size: 1.25em; }
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 15px; }
+      .container { padding: 15px; }
+      .main-title { font-size: 2em; margin-bottom: 25px;}
+      .grid { grid-template-columns: repeat(6, minmax(40px, 1fr)); gap: 6px; max-width: 100%; }
+      .square input { font-size: 0.9em; }
+      .cards-container { margin-top: 30px; gap: 15px; }
+      .analysis-results-card { padding: 20px; }
+      .suggestion-item { padding: 15px 10px; min-height: 100px;}
+      .analyze-btn { font-size: 1em; padding: 10px 20px; }
+      .suggestion-item .color-prediction { font-size: 1.2em; }
+    }
+
+    @media (max-width: 480px) {
+      .main-title { font-size: 1.7em; margin-bottom: 20px; }
+      .grid { grid-template-columns: repeat(5, minmax(35px, 1fr)); gap: 5px;}
+      .square input { font-size: 0.8em; }
+      #background-video { display: none; }
+      body { background: #2c3e50; }
+      .suggestions-grid { grid-template-columns: 1fr; }
+      .suggestion-item { margin-bottom: 12px; }
+      .suggestion-item:last-child { margin-bottom: 0; }
+       .analysis-results-card h3 { font-size: 1.2em; }
+       .suggestion-item h4 {font-size: 0.85em;}
+       .suggestion-item .color-prediction { font-size: 1.15em; }
+    }
+  </style>
+</head>
+<body>
+  <video id="background-video" autoplay loop muted playsinline>
+    <source src="https://hackerdominesalife00.netlify.app/media/3585079191-preview.mp4_1728018529513-_uhUTxz9.mp4" type="video/mp4">
+    Seu navegador não suporta o formato de vídeo.
+  </video>
+
+  <div class="container">
+    <!-- MODIFICADO: Título principal -->
+    <h1 class="main-title">ANÁLISE - PADRÕES AVANÇADOS</h1>
+    <div class="grid">
+      <!-- 30 quadrados -->
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+      <div class="square"><input type="text" maxlength="2" inputmode="tel"></div>
+    </div>
+
+    <button class="analyze-btn" onclick="analyze()">Analisar Padrões</button>
+
+    <div class="cards-container" id="cards-container">
+      <!-- O .analysis-results-card será inserido aqui dinamicamente -->
+    </div>
+  </div>
+
+  <script>
+    const MAX_HISTORY_FOR_ANALYSIS = 30;
+
+    function getRecentHistory(count) {
+        const inputs = document.querySelectorAll('.square input');
+        const history = [];
+        const allValues = Array.from(inputs).map(input => input.value.trim().toLowerCase());
+        
+        let validEntriesFound = 0;
+        for (let i = allValues.length - 1; i >= 0; i--) {
+            if (validEntriesFound >= count) break;
+            const value = allValues[i];
+            if (value) {
+                let parsedValue = parseInt(value);
+                let color = null;
+                if (!isNaN(parsedValue)) {
+                    if (parsedValue >= 1 && parsedValue <= 7) color = 'vermelho';
+                    else if (parsedValue >= 8 && parsedValue <= 14) color = 'preto';
+                } else {
+                    if (['v', 'r', 'vermelho'].includes(value)) color = 'vermelho';
+                    else if (['p', 'b', 'preto'].includes(value)) color = 'preto';
+                }
+                if (color) {
+                    history.unshift(color);
+                    validEntriesFound++;
+                }
+            }
+        }
+        return history;
+    }
+
+    // --- Funções de Sugestão (Implementar lógica avançada aqui) ---
+    function suggestNextColorByMajority(history) {
+        if (history.length < 5) return { color: "Analisando...", confidence: 0.1 };
+        const counts = history.reduce((acc, cor) => { acc[cor] = (acc[cor] || 0) + 1; return acc; }, {});
+        const vermelhoCount = counts['vermelho'] || 0;
+        const pretoCount = counts['preto'] || 0;
+
+        if (vermelhoCount === 0 && pretoCount === 0) return { color: "Inválido", confidence: 0 };
+        
+        let suggestedColor, confidence;
+        if (vermelhoCount > pretoCount * 1.5) {
+            suggestedColor = "preto";
+            confidence = 0.65;
+        } else if (pretoCount > vermelhoCount * 1.5) {
+            suggestedColor = "vermelho";
+            confidence = 0.65;
+        } else if (vermelhoCount > pretoCount) {
+            suggestedColor = "vermelho";
+            confidence = 0.55;
+        } else if (pretoCount > vermelhoCount) {
+            suggestedColor = "preto";
+            confidence = 0.55;
+        } else {
+            suggestedColor = Math.random() > 0.5 ? "vermelho" : "preto";
+            confidence = 0.4;
+        }
+        return { color: suggestedColor, confidence };
+    }
+
+    function suggestNextColorByPattern(history) {
+        if (history.length < 10) return { color: "Analisando...", confidence: 0.1 };
+        if (history.length >= 3) {
+            const p3 = history.slice(-3);
+            if (p3[0] === 'vermelho' && p3[1] === 'preto' && p3[2] === 'vermelho') return { color: 'preto', confidence: 0.7 };
+            if (p3[0] === 'preto' && p3[1] === 'vermelho' && p3[2] === 'preto') return { color: 'vermelho', confidence: 0.7 };
+        }
+        return { color: (Math.random() > 0.5 ? "vermelho" : "preto"), confidence: 0.3 };
+    }
+
+    function suggestNextColorByIA(history) {
+        if (history.length < 15) return { color: "Analisando...", confidence: 0.1 };
+        const vermelhoCount = history.filter(cor => cor === 'vermelho').length;
+        const pretoCount = history.filter(cor => cor === 'preto').length;
+
+        const lastRedGap = history.length - (history.lastIndexOf('vermelho') + 1);
+        const lastBlackGap = history.length - (history.lastIndexOf('preto') + 1);
+
+        if (vermelhoCount === 0 && pretoCount > 0) return { color: "vermelho", confidence: 0.8};
+        if (pretoCount === 0 && vermelhoCount > 0) return { color: "preto", confidence: 0.8};
+
+        if (lastRedGap > 5 && lastRedGap > lastBlackGap) return { color: "vermelho", confidence: 0.75};
+        if (lastBlackGap > 5 && lastBlackGap > lastRedGap) return { color: "preto", confidence: 0.75};
+        
+        if (vermelhoCount > pretoCount * 2) return {color: "preto", confidence: 0.7};
+        if (pretoCount > vermelhoCount * 2) return {color: "vermelho", confidence: 0.7};
+
+        return suggestNextColorByPattern(history.slice(-15));
+    }
+    // --- Fim Funções de Sugestão ---
+
+    function analyze() {
+      const history = getRecentHistory(MAX_HISTORY_FOR_ANALYSIS);
+      
+      const resultColor = suggestNextColorByMajority(history);
+      const resultPattern = suggestNextColorByPattern(history);
+      const resultIA = suggestNextColorByIA(history);
+
+      const container = document.getElementById('cards-container');
+      container.innerHTML = ''; 
+
+      function createSuggestionItemHTML(title, predictionResult) {
+          const { color, confidence } = predictionResult;
+          let emoji = '❓'; 
+          let textColor = '#f0f0f0';
+          let confidenceText = confidence > 0 ? `(${(confidence * 100).toFixed(0)}%)` : "";
+
+          if (color.toLowerCase() === 'vermelho') {
+              emoji = '🔴'; 
+              textColor = '#e74c3c';
+          } else if (color.toLowerCase() === 'preto') {
+              emoji = '⚫'; 
+              textColor = '#e0e0e0';
+          } else if (color.toLowerCase() === 'inválido' || color.toLowerCase().includes("analisando")) {
+              emoji = color.toLowerCase().includes("analisando") ? '⏳' : '⚠️';
+              textColor = '#ffcc00';
+          }
+          
+          let confidenceDisplayHTML = '';
+          if (confidence > 0.1 && !color.toLowerCase().includes("analisando") && !color.toLowerCase().includes("inválido")) {
+            confidenceDisplayHTML = `
+                <small class="confidence-info">
+                    <span class="confidence-label">Confiança:</span>
+                    <span class="confidence-value">${confidenceText}</span>
+                </small>`;
+          }
+
+          return `
+              <div class="suggestion-item">
+                  <h4>${title}</h4>
+                  <div class="color-prediction" style="color: ${textColor};">
+                      <span class="color-emoji">${emoji}</span>
+                      ${color.toUpperCase()}
+                  </div>
+                  ${confidenceDisplayHTML}
+              </div>
+          `;
+      }
+
+      const resultsCard = document.createElement('div');
+      resultsCard.className = 'analysis-results-card';
+      resultsCard.innerHTML = `
+          <h3>ANÁLISE DA RODADA</h3>
+          <div class="suggestions-grid">
+              ${createSuggestionItemHTML("Tendência", resultColor)}
+              ${createSuggestionItemHTML("Padrão", resultPattern)}
+              ${createSuggestionItemHTML("Insight \"IA\"", resultIA)}
+          </div>
+      `;
+      container.appendChild(resultsCard);
+      void resultsCard.offsetWidth; 
+      resultsCard.classList.add('show');
+
+      setTimeout(() => {
+        removeAndReorganizeInputs();
+        fadeOutAndRemoveResultsCard(); 
+        checkIfAllSquaresFilled(); 
+      }, 20000);
+    }
+
+    function fadeOutAndRemoveResultsCard() {
+        const resultsCard = document.querySelector('.analysis-results-card');
+        if (resultsCard) {
+            resultsCard.classList.remove('show'); 
+            setTimeout(() => resultsCard.remove(), 550);
+        }
+    }
+    
+    function removeAndReorganizeInputs() {
+      const inputs = document.querySelectorAll('.square input');
+      let currentValidValues = [];
+      inputs.forEach(input => {
+          const value = input.value.trim().toLowerCase();
+          let parsedValue = parseInt(value);
+          let colorValue = null;
+            if (!isNaN(parsedValue)) {
+                if (parsedValue >= 1 && parsedValue <= 14) colorValue = value;
+            } else {
+                if (['v', 'r', 'vermelho', 'p', 'b', 'preto'].includes(value)) {
+                     colorValue = value;
+                }
+            }
+            if(colorValue) currentValidValues.push(colorValue);
+      });
+
+      if (currentValidValues.length >= 6) { 
+          currentValidValues = currentValidValues.slice(6);
+      } else {
+          currentValidValues = []; 
+      }
+      
+      inputs.forEach((input, index) => {
+        input.value = currentValidValues[index] || '';
+      });
+       checkIfAllSquaresFilled();
+    }
+
+    function checkIfAllSquaresFilled() {
+      const inputs = document.querySelectorAll('.square input');
+      const allFilled = Array.from(inputs).every(input => {
+          const value = input.value.trim().toLowerCase();
+          if (!value) return false; 
+          let parsedNum = parseInt(value);
+          if (!isNaN(parsedNum)) {
+              return parsedNum >= 1 && parsedNum <= 14;
+          } else {
+              return ['v', 'r', 'vermelho', 'p', 'b', 'preto'].includes(value);
+          }
+      });
+      
+      const analyzeBtn = document.querySelector('.analyze-btn');
+      if (allFilled) {
+        analyzeBtn.style.opacity = '1';
+        analyzeBtn.style.pointerEvents = 'auto';
+      } else {
+        analyzeBtn.style.opacity = '0.5';
+        analyzeBtn.style.pointerEvents = 'none';
+      }
+    }
+
+    document.querySelectorAll('.square input').forEach(input => {
+      input.addEventListener('input', checkIfAllSquaresFilled);
+      input.addEventListener('keypress', function(e) { 
+          if (e.key === 'Enter' || e.keyCode === 13) {
+              e.preventDefault(); 
+              const currentInput = e.target;
+              const allInputs = Array.from(document.querySelectorAll('.square input'));
+              const currentIndex = allInputs.indexOf(currentInput);
+              const nextInput = allInputs[currentIndex + 1];
+              if (nextInput) {
+                  nextInput.focus();
+              } else {
+                  const analyzeBtn = document.querySelector('.analyze-btn');
+                  if(analyzeBtn.style.pointerEvents === 'auto') {
+                      analyzeBtn.focus();
+                  }
+              }
+          }
+      });
+    });
+
+    checkIfAllSquaresFilled();
+  </script>
+</body>
+</html>
